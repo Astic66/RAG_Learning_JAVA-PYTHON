@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RAG 企业内部知识问答系统 - 项目设计文档</title>
+<style>
+  :root {
+    --bg: #f8f9fa;
+    --panel: #ffffff;
+    --ink: #1f2937;
+    --muted: #6b7280;
+    --line: #e5e7eb;
+    --brand: #1d4ed8;
+    --brand-light: #dbeafe;
+    --accent: #059669;
+    --accent-light: #d1fae5;
+    --warning: #d97706;
+    --warning-light: #fef3c7;
+    --danger: #dc2626;
+    --shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, "Segoe UI", "Microsoft YaHei", sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    line-height: 1.75;
+  }
+
+  .cover {
+    background: linear-gradient(135deg, #1e3a8a 0%, #1d4ed8 50%, #0ea5e9 100%);
+    color: #fff;
+    padding: 80px 40px;
+    text-align: center;
+  }
+  .cover h1 { font-size: 2.6em; font-weight: 800; margin-bottom: 12px; }
+  .cover .subtitle { font-size: 1.2em; opacity: 0.9; }
+  .cover .meta {
+    margin-top: 30px;
+    display: inline-flex;
+    gap: 24px;
+    flex-wrap: wrap;
+    justify-content: center;
+    font-size: 0.9em;
+    opacity: 0.85;
+  }
+
+  .toc {
+    background: var(--panel);
+    max-width: 900px;
+    margin: -40px auto 40px;
+    padding: 28px 34px;
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    position: relative;
+    z-index: 1;
+  }
+  .toc h2 { font-size: 1.2em; margin-bottom: 16px; }
+  .toc ul { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 30px; }
+  .toc li { list-style: none; font-size: 0.92em; }
+  .toc a { color: var(--brand); text-decoration: none; }
+  .toc a:hover { text-decoration: underline; }
+
+  .container { max-width: 900px; margin: 0 auto; padding: 0 20px 60px; }
+
+  .section {
+    background: var(--panel);
+    border-radius: 12px;
+    padding: 32px;
+    margin-bottom: 24px;
+    box-shadow: var(--shadow);
+  }
+  .section h2 {
+    font-size: 1.5em;
+    color: var(--brand);
+    margin-bottom: 18px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid var(--brand-light);
+  }
+  .section h3 {
+    font-size: 1.15em;
+    margin: 24px 0 12px;
+    color: #111827;
+  }
+  .section h4 { font-size: 1em; margin: 18px 0 8px; color: #374151; }
+  .section p { margin-bottom: 12px; color: #374151; }
+
+  .badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 50px;
+    font-size: 0.78em;
+    font-weight: 600;
+    margin-right: 6px;
+  }
+  .badge.blue { background: var(--brand-light); color: var(--brand); }
+  .badge.green { background: var(--accent-light); color: var(--accent); }
+  .badge.yellow { background: var(--warning-light); color: var(--warning); }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 16px 0;
+    font-size: 0.92em;
+  }
+  th, td {
+    text-align: left;
+    padding: 12px 14px;
+    border: 1px solid var(--line);
+  }
+  th { background: #f9fafb; font-weight: 600; color: #4b5563; }
+  tr:nth-child(even) { background: #fafafa; }
+  td code, th code {
+    background: #eff6ff;
+    color: var(--brand);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.9em;
+  }
+
+  .info-box {
+    border-left: 4px solid var(--brand);
+    background: #eff6ff;
+    padding: 16px 18px;
+    border-radius: 6px;
+    margin: 16px 0;
+  }
+  .info-box.green { border-left-color: var(--accent); background: #ecfdf5; }
+  .info-box.yellow { border-left-color: var(--warning); background: #fffbeb; }
+
+  .diagram {
+    background: #f9fafb;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 24px;
+    margin: 18px 0;
+    text-align: center;
+  }
+  .flow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin: 14px 0;
+  }
+  .flow-node {
+    padding: 10px 16px;
+    border-radius: 8px;
+    font-size: 0.85em;
+    font-weight: 600;
+    min-width: 90px;
+  }
+  .flow-arrow { color: var(--muted); font-size: 1.2em; }
+
+  .tree {
+    font-family: "Fira Code", monospace;
+    background: #1f2937;
+    color: #e5e7eb;
+    padding: 20px;
+    border-radius: 10px;
+    font-size: 0.85em;
+    overflow-x: auto;
+    line-height: 1.9;
+  }
+  .tree .comment { color: #9ca3af; }
+  .tree .dir { color: #60a5fa; }
+  .tree .file { color: #a5b4fc; }
+
+  .code-block {
+    background: #1f2937;
+    color: #e5e7eb;
+    padding: 16px 20px;
+    border-radius: 10px;
+    overflow-x: auto;
+    font-family: "Fira Code", monospace;
+    font-size: 0.84em;
+    line-height: 1.7;
+    margin: 14px 0;
+  }
+
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+  }
+  .card {
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 18px;
+    background: #fafafa;
+  }
+  .card h4 { margin-top: 0; color: var(--brand); }
+
+  .footer {
+    text-align: center;
+    color: var(--muted);
+    font-size: 0.85em;
+    padding: 30px 20px;
+  }
+
+  @media (max-width: 700px) {
+    .toc ul { grid-template-columns: 1fr; }
+    .two-col { grid-template-columns: 1fr; }
+    .cover h1 { font-size: 1.9em; }
+  }
+</style>
+</head>
+<body>
+
+<div class="cover">
+  <h1>RAG 企业内部知识问答系统</h1>
+  <div class="subtitle">项目设计文档 / Project Design Document</div>
+  <div class="meta">
+    <span>📁 本地路径：D:\AI相关\RAG项目\RAG企业内部知识问答系统</span>
+    <span>🌐 仓库：https://github.com/Astic66/RAG_Learning_python</span>
+    <span>📅 生成日期：2026-06-27</span>
+  </div>
+</div>
+
+<div class="toc">
+  <h2>目录</h2>
+  <ul>
+    <li><a href="#s1">1. 项目概述</a></li>
+    <li><a href="#s2">2. 设计目标</a></li>
+    <li><a href="#s3">3. 技术架构</a></li>
+    <li><a href="#s4">4. 目录结构设计</a></li>
+    <li><a href="#s5">5. 后端设计</a></li>
+    <li><a href="#s6">6. 前端设计</a></li>
+    <li><a href="#s7">7. RAG 流水线设计</a></li>
+    <li><a href="#s8">8. API 接口设计</a></li>
+    <li><a href="#s9">9. 数据存储设计</a></li>
+    <li><a href="#s10">10. 部署与使用</a></li>
+    <li><a href="#s11">11. 学习价值与扩展方向</a></li>
+    <li><a href="#s12">12. 风险与注意事项</a></li>
+  </ul>
+</div>
+
+<div class="container">
+
+  <div class="section" id="s1">
+    <h2>1. 项目概述</h2>
+    <p>本项目是一个<b>本地部署的 RAG（Retrieval-Augmented Generation）企业内部知识问答系统</b>。它允许用户上传企业文档（如规章制度、产品手册、培训材料），系统自动对文档进行切块和向量化，并存储在本地 JSON 向量库中。用户可以通过自然语言提问，系统先从知识库中检索最相关的文本片段，再调用本地大语言模型基于检索结果生成准确、可溯源的回答。</p>
+
+    <div class="two-col">
+      <div class="card">
+        <h4>核心能力</h4>
+        <p style="font-size:0.92em;">文档上传、文本切块、Embedding 向量化、余弦相似度检索、LLM 增强生成、来源展示、对话历史。</p>
+      </div>
+      <div class="card">
+        <h4>典型场景</h4>
+        <p style="font-size:0.92em;">企业制度查询、产品 FAQ、内部培训问答、课程笔记检索、个人知识库助手。</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="section" id="s2">
+    <h2>2. 设计目标</h2>
+    <table>
+      <tr><th>目标</th><th>说明</th><th>实现方式</th></tr>
+      <tr>
+        <td><span class="badge blue">本地化</span></td>
+        <td>数据和模型都在本地运行，不上传云端</td>
+        <td>Ollama 本地运行 LLM 和 Embedding 模型</td>
+      </tr>
+      <tr>
+        <td><span class="badge green">易学习</span></td>
+        <td>代码不过度封装，方便理解 RAG 原理</td>
+        <td>零依赖标准库后端、手写向量检索、纯 JSON 存储</td>
+      </tr>
+      <tr>
+        <td><span class="badge yellow">可扩展</span></td>
+        <td>架构清晰，便于替换组件</td>
+        <td>服务层分离、配置集中、双版本后端并存</td>
+      </tr>
+    </table>
+  </div>
+
+  <div class="section" id="s3">
+    <h2>3. 技术架构</h2>
+
+    <h3>3.1 总体架构图</h3>
+    <div class="diagram">
+      <div class="flow">
+        <div class="flow-node" style="background:#dbeafe; color:#1d4ed8;">前端<br>HTML/CSS/JS</div>
+        <div class="flow-arrow">↔</div>
+        <div class="flow-node" style="background:#e0e7ff; color:#4338ca;">后端<br>Python HTTP</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-node" style="background:#d1fae5; color:#059669;">Ollama</div>
+        <div class="flow-node" style="background:#fef3c7; color:#d97706;">本地 JSON<br>向量库</div>
+      </div>
+    </div>
+
+    <h3>3.2 技术栈</h3>
+    <table>
+      <tr><th>层级</th><th>技术</th><th>说明</th></tr>
+      <tr><td>前端</td><td>原生 HTML5 / CSS3 / ES6</td><td>单页应用，无框架依赖</td></tr>
+      <tr><td>后端（主）</td><td>Python 3.x 标准库 <code>http.server</code></td><td>零第三方依赖，server.py</td></tr>
+      <tr><td>后端（备）</td><td>FastAPI + Uvicorn</td><td>更工程化，支持 PDF/DOCX</td></tr>
+      <tr><td>LLM</td><td>Ollama <code>qwen2.5:7b</code></td><td>本地中文大模型</td></tr>
+      <tr><td>Embedding</td><td>Ollama <code>nomic-embed-text</code></td><td>本地文本向量化模型</td></tr>
+      <tr><td>向量库</td><td>JSON 文件</td><td>手写存储和检索，便于学习</td></tr>
+      <tr><td>文档解析</td><td>txt / md（零依赖版）</td><td>FastAPI 版扩展 pdf / docx</td></tr>
+      <tr><td>相似度算法</td><td>余弦相似度</td><td>手写实现，暴力检索</td></tr>
+    </table>
+  </div>
+
+  <div class="section" id="s4">
+    <h2>4. 目录结构设计</h2>
+    <p>项目采用前后端分离、服务层内聚的组织方式。两套后端实现共享前端和存储目录。</p>
+
+    <div class="tree">
+<span class="dir">RAG企业内部知识问答系统/</span>
+├── <span class="file">README.md</span>                    <span class="comment"># 项目总览与快速启动</span>
+├── <span class="file">启动后端.bat</span>                <span class="comment"># Windows 一键启动脚本</span>
+├── <span class="file">示例知识库.txt</span>              <span class="comment"># 示例企业报销制度文档</span>
+├── <span class="dir">backend/</span>                      <span class="comment"># 后端代码</span>
+│   ├── <span class="file">server.py</span>               <span class="comment"># 主入口：标准库 HTTP 服务</span>
+│   ├── <span class="file">requirements.txt</span>        <span class="comment"># 备用 FastAPI 版依赖</span>
+│   ├── <span class="dir">app/</span>                    <span class="comment"># FastAPI 版本</span>
+│   │   ├── <span class="file">main.py</span>             <span class="comment"># FastAPI 接口入口</span>
+│   │   ├── <span class="file">config.py</span>           <span class="comment"># 配置常量</span>
+│   │   ├── <span class="file">models.py</span>           <span class="comment"># Pydantic 请求/响应模型</span>
+│   │   └── <span class="dir">services/</span>           <span class="comment"># 业务服务层</span>
+│   │       ├── <span class="file">document_loader.py</span>
+│   │       ├── <span class="file">ollama_client.py</span>
+│   │       ├── <span class="file">text_splitter.py</span>
+│   │       └── <span class="file">vector_store.py</span>
+│   └── <span class="dir">storage/</span>                <span class="comment"># 数据存储</span>
+│       ├── <span class="dir">documents/</span>          <span class="comment"># 上传的原始文档</span>
+│       └── <span class="file">vector_store.json</span>   <span class="comment"># 持久化向量库</span>
+└── <span class="dir">frontend/</span>                     <span class="comment"># 前端代码</span>
+    ├── <span class="file">index.html</span>            <span class="comment"># 页面结构</span>
+    ├── <span class="file">app.js</span>              <span class="comment"># 交互逻辑</span>
+    └── <span class="file">style.css</span>           <span class="comment"># 样式表</span>
+    </div>
+
+    <div class="info-box green">
+      <strong>设计意图：</strong>两套后端并存，让学习者既能看懂最精简的零依赖实现，也能参考更工程化的 FastAPI 版本。服务层按单一职责拆分，便于替换 Embedding 模型、向量库或 LLM。
+    </div>
+  </div>
+
+  <div class="section" id="s5">
+    <h2>5. 后端设计</h2>
+
+    <h3>5.1 双版本后端对比</h3>
+    <table>
+      <tr><th>维度</th><th>server.py（主）</th><th>backend/app/（备）</th></tr>
+      <tr><td>框架</td><td>Python 标准库 <code>http.server</code></td><td>FastAPI + Uvicorn</td></tr>
+      <tr><td>依赖</td><td>零第三方依赖</td><td>fastapi, uvicorn, requests, pypdf, python-docx 等</td></tr>
+      <tr><td>文件上传解析</td><td>手写 multipart 解析器</td><td>FastAPI UploadFile</td></tr>
+      <tr><td>文档格式</td><td>txt / md</td><td>txt / md / pdf / docx</td></tr>
+      <tr><td>适用场景</td><td>学习原理、快速启动、避免依赖编译问题</td><td>生产化、需要多格式支持</td></tr>
+    </table>
+
+    <h3>5.2 核心模块职责</h3>
+    <table>
+      <tr><th>模块/函数</th><th>文件</th><th>职责</th></tr>
+      <tr><td><code>RagHandler</code></td><td>server.py</td><td>HTTP 请求路由与响应处理</td></tr>
+      <tr><td><code>split_text()</code></td><td>server.py</td><td>文本清洗与滑动窗口分块</td></tr>
+      <tr><td><code>embed_text()</code></td><td>server.py</td><td>调用 Ollama Embedding API</td></tr>
+      <tr><td><code>chat_with_context()</code></td><td>server.py</td><td>调用 Ollama Chat API 生成答案</td></tr>
+      <tr><td><code>cosine_similarity()</code></td><td>server.py</td><td>计算两个向量的余弦相似度</td></tr>
+      <tr><td><code>search_chunks()</code></td><td>server.py</td><td>问题向量化并检索 Top-K 相关块</td></tr>
+      <tr><td><code>load_store() / save_store()</code></td><td>server.py</td><td>读写 JSON 向量库</td></tr>
+    </table>
+
+    <h3>5.3 配置设计</h3>
+    <p>所有可变参数集中在文件顶部，便于统一修改。</p>
+    <div class="code-block">
+OLLAMA_BASE_URL = "http://127.0.0.1:11434"   # Ollama 服务地址
+CHAT_MODEL = "qwen2.5:7b"                    # 聊天生成模型
+EMBEDDING_MODEL = "nomic-embed-text"         # 文本向量化模型
+CHUNK_SIZE = 800                             # 每个文本块最大字符数
+CHUNK_OVERLAP = 120                          # 相邻块重叠字符数
+    </div>
+  </div>
+
+  <div class="section" id="s6">
+    <h2>6. 前端设计</h2>
+
+    <h3>6.1 页面布局</h3>
+    <p>采用经典的三栏式布局：</p>
+    <ul style="margin-left:20px; color:#374151;">
+      <li><b>顶部栏</b>：项目名称 + 后端连接状态</li>
+      <li><b>左侧知识库面板</b>：文件上传、已上传文档列表、删除索引</li>
+      <li><b>右侧问答面板</b>：对话消息气泡区、输入框、提问按钮</li>
+    </ul>
+
+    <h3>6.2 交互流程</h3>
+    <table>
+      <tr><th>用户操作</th><th>前端行为</th><th>后端接口</th></tr>
+      <tr><td>选择文件并点击上传</td><td>通过 FormData 发送文件，显示加载状态</td><td>POST /api/documents</td></tr>
+      <tr><td>输入问题并点击提问</td><td>渲染用户气泡，显示"思考中"，请求接口</td><td>POST /api/chat</td></tr>
+      <tr><td>收到回答</td><td>渲染 AI 气泡，展开/折叠来源卡片</td><td>-</td></tr>
+      <tr><td>点击删除索引</td><td>发送 DELETE 请求，刷新文档列表</td><td>DELETE /api/documents/{id}</td></tr>
+    </table>
+
+    <h3>6.3 状态管理</h3>
+    <p>前端使用原生 JavaScript 管理状态：</p>
+    <ul style="margin-left:20px; color:#374151;">
+      <li><code>messages</code> 数组保存完整对话历史</li>
+      <li>对话历史通过 <code>localStorage</code> 持久化，刷新页面不丢失</li>
+      <li>每次渲染时根据 <code>role</code> 字段分别渲染用户/AI/加载三种气泡</li>
+    </ul>
+  </div>
+
+  <div class="section" id="s7">
+    <h2>7. RAG 流水线设计</h2>
+
+    <h3>7.1 离线索入阶段</h3>
+    <div class="diagram">
+      <div class="flow">
+        <div class="flow-node" style="background:#dbeafe; color:#1d4ed8;">上传文档</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-node" style="background:#e0e7ff; color:#4338ca;">保存原始文件</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-node" style="background:#d1fae5; color:#059669;">文本分块</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-node" style="background:#fef3c7; color:#d97706;">Embedding 向量化</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-node" style="background:#fce7f3; color:#be185d;">写入 JSON 向量库</div>
+      </div>
+    </div>
+
+    <h3>7.2 在线问答阶段</h3>
+    <div class="diagram">
+      <div class="flow">
+        <div class="flow-node" style="background:#dbeafe; color:#1d4ed8;">用户提问</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-node" style="background:#fef3c7; color:#d97706;">问题向量化</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-node" style="background:#d1fae5; color:#059669;">余弦相似度检索 Top-K</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-node" style="background:#e0e7ff; color:#4338ca;">拼接上下文 Prompt</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-node" style="background:#dbeafe; color:#1d4ed8;">LLM 生成答案</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-node" style="background:#fce7f3; color:#be185d;">返回答案 + 来源</div>
+      </div>
+    </div>
+
+    <h3>7.3 关键算法说明</h3>
+    <h4>文本分块</h4>
+    <p>采用滑动窗口策略，窗口大小 800 字符，步长 680 字符（800 - 120 重叠），保留 120 字符重叠。目的是防止句子在块边界被切断，提升检索召回率。</p>
+
+    <h4>余弦相似度</h4>
+    <div class="code-block">
+cos_sim(A, B) = (A · B) / (||A|| × ||B||)
+
+其中 A · B 表示向量点积，||A|| 表示向量 L2 范数。
+结果越接近 1，表示两段文本语义越相似。
+    </div>
+
+    <h4>检索策略</h4>
+    <p>暴力线性扫描全部向量并计算相似度，排序后取 Top-K（默认 K=4）。数据量小时足够；数据量大时可替换为专业向量数据库（如 FAISS、Milvus、Chroma）。</p>
+  </div>
+
+  <div class="section" id="s8">
+    <h2>8. API 接口设计</h2>
+    <p>RESTful 风格接口，所有响应均为 JSON。当前版本为 v1 内嵌设计，未加版本前缀。</p>
+    <table>
+      <tr><th>方法</th><th>路径</th><th>请求体</th><th>响应</th><th>说明</th></tr>
+      <tr><td>GET</td><td><code>/api/health</code></td><td>-</td><td>status, chat_model, embedding_model</td><td>健康检查</td></tr>
+      <tr><td>GET</td><td><code>/api/documents</code></td><td>-</td><td>文档列表（含块数）</td><td>列出知识库文档</td></tr>
+      <tr><td>POST</td><td><code>/api/documents</code></td><td>multipart/form-data: file</td><td>document_id, file_name, chunk_count</td><td>上传并建立索引</td></tr>
+      <tr><td>DELETE</td><td><code>/api/documents/{id}</code></td><td>-</td><td>deleted_chunks</td><td>删除文档索引</td></tr>
+      <tr><td>POST</td><td><code>/api/chat</code></td><td>{question, top_k}</td><td>{answer, sources[]}</td><td>提问并生成答案</td></tr>
+      <tr><td>GET</td><td><code>/</code> / <code>/assets/*</code></td><td>-</td><td>HTML / CSS / JS</td><td>前端静态资源</td></tr>
+    </table>
+
+    <div class="info-box yellow">
+      <strong>接口设计说明：</strong>接口数量精简，职责单一。上传接口同时完成文件保存、分块、Embedding、入库，简化前端调用；问答接口同时完成检索和生成，一次性返回答案与来源。
+    </div>
+  </div>
+
+  <div class="section" id="s9">
+    <h2>9. 数据存储设计</h2>
+
+    <h3>9.1 向量库结构</h3>
+    <p>向量库存储在 <code>backend/storage/vector_store.json</code>，为 JSON 数组。每个元素代表一个文本块：</p>
+    <div class="code-block">
+{
+  "id": "uuid-单个块唯一ID",
+  "document_id": "uuid-所属文档ID",
+  "document_name": "示例知识库.txt",
+  "chunk_index": 0,
+  "content": "员工出差用餐报销上限为每餐500元...",
+  "embedding": [0.123, -0.456, 0.789, ...]
+}
+    </div>
+
+    <h3>9.2 原始文档存储</h3>
+    <p>上传的原始文件保存在 <code>backend/storage/documents/</code>，仅用于备份和下载，不参与检索。检索完全依赖向量库中的向量和文本。</p>
+
+    <h3>9.3 存储设计取舍</h3>
+    <table>
+      <tr><th>方案</th><th>优点</th><th>缺点</th><th>本项目选择</th></tr>
+      <tr><td>JSON 文件</td><td>零依赖、直观、便于学习</td><td>数据量大时性能差</td><td>✅ 当前使用</td></tr>
+      <tr><td>FAISS / Chroma</td><td>检索快、支持海量向量</td><td>增加依赖和复杂度</td><td>⭕ 推荐扩展</td></tr>
+      <tr><td>MySQL / PostgreSQL</td><td>事务性强</td><td>不适合高维向量检索</td><td>❌ 不适合</td></tr>
+    </table>
+  </div>
+
+  <div class="section" id="s10">
+    <h2>10. 部署与使用</h2>
+
+    <h3>10.1 环境要求</h3>
+    <ul style="margin-left:20px; color:#374151;">
+      <li>Python 3.x</li>
+      <li>Ollama 已安装并运行</li>
+      <li>已下载 <code>qwen2.5:7b</code> 和 <code>nomic-embed-text</code> 模型</li>
+    </ul>
+
+    <h3>10.2 启动步骤</h3>
+    <div class="code-block">
+# 1. 确认模型
+ollama list
+
+# 2. 启动后端（方式一：双击脚本）
+启动后端.bat
+
+# 3. 启动后端（方式二：命令行）
+cd backend
+python server.py
+
+# 4. 打开浏览器访问
+http://127.0.0.1:8000
+    </div>
+
+    <h3>10.3 使用流程</h3>
+    <ol style="margin-left:20px; color:#374151;">
+      <li>在左侧上传企业文档（txt / md）</li>
+      <li>等待系统完成切块和向量化</li>
+      <li>在右侧输入问题，按回车或点击提问</li>
+      <li>查看 AI 回答，点击来源卡片可展开原始片段</li>
+    </ol>
+  </div>
+
+  <div class="section" id="s11">
+    <h2>11. 学习价值与扩展方向</h2>
+
+    <h3>11.1 适合学习的点</h3>
+    <ul style="margin-left:20px; color:#374151;">
+      <li>理解 RAG 完整链路：分块 → Embedding → 检索 → 生成</li>
+      <li>学习如何手写余弦相似度和 multipart 解析</li>
+      <li>学习零依赖后端如何服务前端静态资源和 REST API</li>
+      <li>理解前后端分离项目的基本组织方式</li>
+    </ul>
+
+    <h3>11.2 推荐扩展方向</h3>
+    <table>
+      <tr><th>方向</th><th>具体做法</th></tr>
+      <tr><td>多格式支持</td><td>切换到 FastAPI 版，启用 PDF / DOCX 解析</td></tr>
+      <tr><td>向量库升级</td><td>用 Chroma / FAISS 替换 JSON 向量库</td></tr>
+      <tr><td>知识图谱 RAG</td><td>提取实体关系，结合图数据库做混合检索</td></tr>
+      <tr><td>流式输出</td><td>将 Ollama stream 改为 true，前端逐字显示</td></tr>
+      <tr><td>会话管理</td><td>后端保存多轮对话上下文，支持多会话</td></tr>
+    </table>
+  </div>
+
+  <div class="section" id="s12">
+    <h2>12. 风险与注意事项</h2>
+    <ul style="margin-left:20px; color:#374151;">
+      <li><b>性能上限：</b>JSON 向量库使用暴力扫描，文档量大时检索会变慢。</li>
+      <li><b>并发能力：</b>标准库 <code>http.server</code> 仅适合学习和轻量使用，不建议直接生产。</li>
+      <li><b>答案可靠性：</b>LLM 仍可能"幻觉"，系统提示词要求基于资料回答，但需人工校验关键信息。</li>
+      <li><b>文件编码：</b>当前默认按 UTF-8 解码，非 UTF-8 文件可能乱码。</li>
+      <li><b>本地运行：</b>Ollama 需要充足显存/内存，7B 模型建议至少 8GB 显存或 16GB 内存。</li>
+    </ul>
+  </div>
+
+</div>
+
+<div class="footer">
+  RAG 企业内部知识问答系统 · 项目设计文档 · 2026-06-27
+</div>
+
+</body>
+</html>
