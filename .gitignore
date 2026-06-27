@@ -1,0 +1,33 @@
+# Python virtual environments
+.venv/
+backend/.venv/
+venv/
+env/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Environment variables
+.env
+.env.local
+
+# RAG generated data / uploaded files
+backend/storage/vector_store.json
+backend/storage/documents/*
+!backend/storage/documents/.gitkeep
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log

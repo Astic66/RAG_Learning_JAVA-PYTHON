@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RAG 企业内部知识问答系统</title>
+  <link rel="stylesheet" href="/assets/style.css" />
+</head>
+<body>
+  <main class="shell">
+    <section class="topbar">
+      <div>
+        <p class="eyebrow">Local Ollama RAG</p>
+        <h1>企业内部知识问答系统</h1>
+      </div>
+      <div id="health" class="status">检查服务中...</div>
+    </section>
+
+    <section class="layout">
+      <aside class="panel">
+        <div class="panel-header">
+          <h2>知识库</h2>
+          <span>TXT / MD</span>
+        </div>
+
+        <label class="upload-box">
+          <input id="fileInput" type="file" accept=".txt,.md" />
+          <strong>选择文档上传</strong>
+          <small>上传后会自动切块、向量化并写入本地 JSON 向量库</small>
+        </label>
+
+        <button id="uploadBtn" class="primary-btn">上传并建立索引</button>
+
+        <div class="divider"></div>
+
+        <div id="docList" class="doc-list"></div>
+      </aside>
+
+      <section class="chat-panel">
+        <div class="chat-header">
+          <div>
+            <h2>知识问答</h2>
+            <p>问题会先做向量检索，再让 qwen2.5:7b 基于资料回答。</p>
+          </div>
+          <button id="clearChatBtn" class="text-btn" title="清空对话">清空对话</button>
+        </div>
+
+        <div id="chatMessages" class="chat-messages">
+          <p class="welcome-tip">先上传一份企业制度、产品说明或课程笔记，然后开始提问。</p>
+        </div>
+
+        <div class="composer">
+          <textarea id="questionInput" rows="2" placeholder="例如：这个文档主要讲了什么？有哪些关键流程？"></textarea>
+          <button id="askBtn" class="ask-btn">提问</button>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <script src="/assets/app.js"></script>
+</body>
+</html>
