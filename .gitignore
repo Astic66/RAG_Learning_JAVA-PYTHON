@@ -22,3 +22,7 @@ Thumbs.db
 
 # Env
 .env
+
+# Local learning notes
+*.local.md
+系统设计说明.md
