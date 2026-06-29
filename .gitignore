@@ -1,33 +1,24 @@
-# Python virtual environments
-.venv/
-backend/.venv/
-venv/
-env/
+﻿# Java
+rag-backend/target/
+rag-backend/.mvn/
 
-# Python cache
+# Python
+rag-service/.venv/
+rag-service/storage/vector_store.json
+rag-service/storage/documents/*
+!rag-service/storage/documents/.gitkeep
 __pycache__/
-*.py[cod]
-*$py.class
-*.so
+*.pyc
 
 # IDE
 .idea/
+*.iml
 .vscode/
 *.swp
-*.swo
 
-# Environment variables
-.env
-.env.local
-
-# RAG generated data / uploaded files
-backend/storage/vector_store.json
-backend/storage/documents/*
-!backend/storage/documents/.gitkeep
-
-# OS files
+# OS
 .DS_Store
 Thumbs.db
 
-# Logs
-*.log
+# Env
+.env

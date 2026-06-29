@@ -1,106 +1,61 @@
-<!--
-  ============================================================================
-  RAG 企业内部知识问答系统 - 前端页面
-  ============================================================================
-  页面结构说明：
-    1. 顶部栏（topbar）：显示项目名称和后端连接状态。
-    2. 左侧知识库面板（panel）：文件上传、文档列表、删除索引。
-    3. 右侧问答面板（chat-panel）：对话消息气泡区、输入框、提问按钮。
-
-  这是一个单页应用（SPA），没有使用 Vue/React 等框架，
-  所有交互逻辑都在 app.js 中，通过原生 DOM 操作实现。
-  ============================================================================
--->
-<!doctype html>
+﻿<!doctype html>
 <html lang="zh-CN">
 <head>
-  <!-- 字符编码：声明 UTF-8，保证中文正常显示 -->
   <meta charset="UTF-8" />
-
-  <!-- 视口设置：让页面在手机上也能正常缩放 -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
-  <!-- 页面标题：会显示在浏览器标签页上 -->
   <title>RAG 企业内部知识问答系统</title>
-
-  <!-- 引入样式表，路径 /assets/style.css 会被后端映射到 frontend/style.css -->
   <link rel="stylesheet" href="/assets/style.css" />
 </head>
 <body>
-  <!-- 页面最外层容器 -->
   <main class="shell">
-
-    <!-- ===================== 顶部栏 ===================== -->
     <section class="topbar">
       <div>
-        <!-- eyebrow 是小标题/副标题 -->
-        <p class="eyebrow">Local Ollama RAG</p>
-        <!-- h1 是主标题 -->
+        <p class="eyebrow">Spring Boot + Python RAG</p>
         <h1>企业内部知识问答系统</h1>
       </div>
-
-      <!-- 后端连接状态，初始显示“检查服务中...”，由 app.js 更新 -->
       <div id="health" class="status">检查服务中...</div>
     </section>
 
-    <!-- ===================== 主体布局 ===================== -->
     <section class="layout">
-
-      <!-- ===================== 左侧：知识库面板 ===================== -->
       <aside class="panel">
         <div class="panel-header">
           <h2>知识库</h2>
-          <span>TXT / MD</span>
+          <span>TXT / MD / PDF / DOCX</span>
         </div>
 
-        <!-- 文件上传区域，点击整个区域可以打开文件选择器 -->
         <label class="upload-box">
-          <!-- accept 限制只能选择 .txt 和 .md 文件 -->
-          <input id="fileInput" type="file" accept=".txt,.md" />
+          <input id="fileInput" type="file" accept=".txt,.md,.pdf,.docx" />
           <strong>选择文档上传</strong>
           <small>上传后会自动切块、向量化并写入本地 JSON 向量库</small>
         </label>
 
-        <!-- 上传按钮，点击后 app.js 会读取 fileInput 并发送给后端 -->
         <button id="uploadBtn" class="primary-btn">上传并建立索引</button>
 
-        <!-- 分隔线 -->
         <div class="divider"></div>
-
-        <!-- 文档列表容器，内容由 app.js 动态渲染 -->
         <div id="docList" class="doc-list"></div>
       </aside>
 
-      <!-- ===================== 右侧：问答面板 ===================== -->
       <section class="chat-panel">
         <div class="chat-header">
           <div>
             <h2>知识问答</h2>
             <p>问题会先做向量检索，再让 qwen2.5:7b 基于资料回答。</p>
           </div>
-          <!-- 清空对话按钮，点击后 app.js 会清空本地聊天记录 -->
           <button id="clearChatBtn" class="text-btn" title="清空对话">清空对话</button>
         </div>
 
-        <!-- 聊天消息容器：用户和 AI 的气泡都会渲染在这里 -->
         <div id="chatMessages" class="chat-messages">
-          <!-- 默认提示语，有对话记录时会被 app.js 替换 -->
           <p class="welcome-tip">先上传一份企业制度、产品说明或课程笔记，然后开始提问。</p>
         </div>
 
-        <!-- 输入区域 -->
         <div class="composer">
-          <!-- 多行文本输入框，placeholder 提示用户怎么提问 -->
           <textarea id="questionInput" rows="2" placeholder="例如：这个文档主要讲了什么？有哪些关键流程？"></textarea>
-          <!-- 提问按钮 -->
           <button id="askBtn" class="ask-btn">提问</button>
         </div>
       </section>
-
     </section>
   </main>
 
-  <!-- 引入前端交互脚本 -->
   <script src="/assets/app.js"></script>
 </body>
 </html>

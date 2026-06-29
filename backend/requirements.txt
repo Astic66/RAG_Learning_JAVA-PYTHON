@@ -1,3 +1,0 @@
-# 当前默认启动方式使用 backend/server.py，零第三方依赖。
-# 你电脑目前是 Python 3.14，FastAPI/Pydantic 等依赖可能没有稳定 wheel。
-# 后面如果安装 Python 3.11/3.12，可以再切回 FastAPI 版本。
